@@ -25,3 +25,5 @@ def calculate_iterations (threw_dices):
   for index in range(threw_dices):
     random_number = random.randint(1, NB_DICE_SIDE)
     array_occuration[random_number - 1] += 1
+
+  return array_occuration

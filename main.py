@@ -62,42 +62,66 @@ def init_scoreboard():
     for player in PLAYERS:
         scoreboard[player] = {
             "score": 0,
+            "lost_score": 0,
             "rolls": 0
         }
     return scoreboard
 
 
+def print_total_score(scoreboard):
+    total_score = "Total score: "
+    for player in scoreboard:
+        current_player_score = scoreboard[player]['score']
+        total_score += f"{player}--> {current_player_score}, "
+    print(total_score + "\n")
+
+
 def game():
     is_finished = False
-    current_turn = 1
+    current_turn = 0
     scoreboard = init_scoreboard()
     while not is_finished:
+        current_turn += 1
         for player in PLAYERS:
-            current_rolls = 1
-            print(f"turn #{current_turn}--> {player} rank #1, score {scoreboard[player]['score']}")
-            occurences = roll_dice_set(DEFAULT_DICES_NB)
-            score = analyse_score(occurences)
-            scoreboard[player]["score"] += score
-            scoreboard[player]["rolls"] += 1
-            dices_to_roll = analyse_dices_to_roll(DEFAULT_DICES_NB, occurences)
-            print(f"roll #{current_rolls}: 2 scoring dices [(1, 1), (1, 5)] scoring {score}, potential total turn score 150, remaining dice to roll : {dices_to_roll}")
-            if score > 0:
-                response = str(input(f"Do you want to reroll {dices_to_roll} dices ? [y/n]"))
-            while dices_to_roll > 0 and response == "y":
-                response = "n"
-                current_rolls += 1
-                occurences = roll_dice_set(dices_to_roll)
-                score = analyse_score(occurences)
-                dices_to_roll = analyse_dices_to_roll(dices_to_roll, occurences)
-                scoreboard[player]["score"] += score
-                scoreboard[player]["rolls"] += 1
-                if dices_to_roll > 0 & score > 0:
-                    response = str(input(f"Do you want to reroll {dices_to_roll} dices ? [y/n]"))
-        
-           
+            
+            print(f"turn#{current_turn}-->{player} rank #1, score {scoreboard[player]['score']}")
+            
+            current_roll = 0
+            potential_turn_score = 0
+            is_looser = False
+            reroll = "y"
+            remaining_dices = DEFAULT_DICES_NB
+
+            while remaining_dices > 0 and reroll == "y":
+                current_roll += 1
+                dices_occurences = roll_dice_set(remaining_dices)
+                previous_remaining_dices = remaining_dices
+                potential_roll_score = analyse_score(dices_occurences)
+                remaining_dices = analyse_dices_to_roll(remaining_dices, dices_occurences)
+                potential_turn_score += potential_roll_score
+                print(f"roll #{current_roll} : {previous_remaining_dices - remaining_dices} scoring dices scoring {potential_roll_score}, potential total turn score {potential_turn_score}, remaining dice to roll : {remaining_dices}")
+                if potential_roll_score == 0:
+                    is_looser = True
+                    break
+                elif remaining_dices > 0:
+                    reroll = input(f"Do you want to reroll {remaining_dices} dices ? [y/n]")
+            
+            
+            if is_looser:
+                print(f"you lose this turn and a potential to score {potential_turn_score} pts\n")
+                scoreboard[player]["lost_score"] += potential_turn_score
+            else:
+                print(f"you win this turn, scoring {potential_turn_score} pts\n")
+                scoreboard[player]["score"] += potential_turn_score
+            print_total_score(scoreboard)
+            
             if scoreboard[player]["score"] >= DEFAULT_TARGET_SCORE:
                 is_finished = True
+                break
         
-        current_turn += 1
-
+    print(f"Game in {current_turn} turns")
+        
+        
+            
+        
 game()

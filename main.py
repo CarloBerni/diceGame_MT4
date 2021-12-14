@@ -1,12 +1,16 @@
 import random
 
+DEFAULT_TARGET_SCORE = 2000 # Target total score to win by default
+
 NB_DICE_SIDE = 6  # Nb of side of the Dices
+DEFAULT_DICES_NB = 5 # Nb of dices to roll
 SCORING_DICE_VALUE_LIST = [1, 5]  # List of the side values of the dice who trigger a standard score
 SCORING_MULTIPLIER_LIST = [100, 50]  # List of multiplier for standard score
 
 THRESHOLD_BONUS = 3  # Threshold of the triggering for bonus in term of occurrence of the same slide value
 STD_BONUS_MULTIPLIER = 100  # Standard multiplier for bonus
 ACE_BONUS_MULTIPLIER = 1000  # Special multiplier for aces bonus
+PLAYERS = ["Stéphane", "François", "Romain", "Laurent", "Christophe", "Isabelle", "Sylvie"] # List of players
 
 
 # return a list of dices value occurrence for a roll of nb_dice_to_roll dices
@@ -17,6 +21,10 @@ def roll_dice_set(nb_dice_to_roll):
         dice_value_occurrence_list[dice_value - 1] += 1
 
     return dice_value_occurrence_list
+
+# returns the numbers of dices to roll
+def analyse_dices_to_roll(nb_dices_rolled, dice_value_occurence_list):
+    return nb_dices_rolled - (nb_dices_rolled - sum(dice_value_occurence_list))
 
 
 def analyse_bonus_score(dice_value_occurrence_list):
@@ -47,4 +55,49 @@ def analyse_score(dice_value_occurrence_list):
     bonus_score, dice_value_occurrence_list = analyse_bonus_score(dice_value_occurrence_list)
     standard_score, dice_value_occurrence_list = analyse_standard_score(dice_value_occurrence_list)
 
-    return bonus_score + standard_score,
+    return bonus_score + standard_score
+
+def init_scoreboard():
+    scoreboard = {}
+    for player in PLAYERS:
+        scoreboard[player] = {
+            "score": 0,
+            "rolls": 0
+        }
+    return scoreboard
+
+
+def game():
+    is_finished = False
+    current_turn = 1
+    scoreboard = init_scoreboard()
+    while not is_finished:
+        for player in PLAYERS:
+            current_rolls = 1
+            print(f"turn #{current_turn}--> {player} rank #1, score {scoreboard[player]['score']}")
+            occurences = roll_dice_set(DEFAULT_DICES_NB)
+            score = analyse_score(occurences)
+            scoreboard[player]["score"] += score
+            scoreboard[player]["rolls"] += 1
+            dices_to_roll = analyse_dices_to_roll(DEFAULT_DICES_NB, occurences)
+            print(f"roll #{current_rolls}: 2 scoring dices [(1, 1), (1, 5)] scoring {score}, potential total turn score 150, remaining dice to roll : {dices_to_roll}")
+            if score > 0:
+                response = str(input(f"Do you want to reroll {dices_to_roll} dices ? [y/n]"))
+            while dices_to_roll > 0 and response == "y":
+                response = "n"
+                current_rolls += 1
+                occurences = roll_dice_set(dices_to_roll)
+                score = analyse_score(occurences)
+                dices_to_roll = analyse_dices_to_roll(dices_to_roll, occurences)
+                scoreboard[player]["score"] += score
+                scoreboard[player]["rolls"] += 1
+                if dices_to_roll > 0 & score > 0:
+                    response = str(input(f"Do you want to reroll {dices_to_roll} dices ? [y/n]"))
+        
+           
+            if scoreboard[player]["score"] >= DEFAULT_TARGET_SCORE:
+                is_finished = True
+        
+        current_turn += 1
+
+game()

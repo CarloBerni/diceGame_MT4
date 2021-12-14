@@ -12,6 +12,11 @@ STD_BONUS_MULTIPLIER = 100  # Standard multiplier for bonus
 ACE_BONUS_MULTIPLIER = 1000  # Special multiplier for aces bonus
 PLAYERS = ["Stéphane", "François", "Romain", "Laurent", "Christophe", "Isabelle", "Sylvie"] # List of players
 
+# Stats
+MEAN_SCORING_TURN = 0
+MEAN_NON_SCORING_TURN = 0
+
+
 
 # return a list of dices value occurrence for a roll of nb_dice_to_roll dices
 def roll_dice_set(nb_dice_to_roll):
@@ -62,8 +67,14 @@ def init_scoreboard():
     for player in PLAYERS:
         scoreboard[player] = {
             "score": 0,
+            "bonus": 0,
             "lost_score": 0,
-            "rolls": 0
+            "rolls": 0,
+            "full_roll": 0,
+            "max_lost_score": 0,
+            "max_score_turn": 0,
+            "max_potential_lost": 0,
+            "longest_turn": 0
         }
     return scoreboard
 

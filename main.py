@@ -74,15 +74,18 @@ def init_scoreboard():
             "max_lost_score": 0,
             "max_score_turn": 0,
             "max_potential_lost": 0,
-            "longest_turn": 0
+            "longest_turn": 0,
+            "rank": 0,
         }
     return scoreboard
 
 
 def get_sorted_scoreboard(scoreboard):
     sorted_dict_keys = sorted(scoreboard, key=lambda x: (scoreboard[x]['score']), reverse=True)
-    return {x:scoreboard[x] for x in sorted_dict_keys}
+    for player in scoreboard:
+        scoreboard[player]['rank'] = sorted_dict_keys.index(player) + 1
 
+    return {x:scoreboard[x] for x in sorted_dict_keys}
 
 def print_total_score(scoreboard):
     sorted_scoreboard = get_sorted_scoreboard(scoreboard)
@@ -100,8 +103,8 @@ def game():
     while not is_finished:
         current_turn += 1
         for player in PLAYERS:
-            
-            print(f"turn#{current_turn}-->{player} rank #1, score {scoreboard[player]['score']}")
+
+            print(f"turn#{current_turn}-->{player} rank #{scoreboard[player]['rank']}, score {scoreboard[player]['score']}")
             
             current_roll = 0
             potential_turn_score = 0
@@ -116,8 +119,16 @@ def game():
                 potential_roll_score = analyse_score(dices_occurences)
                 remaining_dices = analyse_dices_to_roll(remaining_dices, dices_occurences)
                 potential_turn_score += potential_roll_score
+                
                 print(f"roll #{current_roll} : {previous_remaining_dices - remaining_dices} scoring dices scoring {potential_roll_score}, potential total turn score {potential_turn_score}, remaining dice to roll : {remaining_dices}")
+                
+                if remaining_dices == 0 and potential_roll_score > 0:
+                    scoreboard[player]['full_roll'] += 1
+                    remaining_dices = DEFAULT_DICES_NB
+                
                 if potential_roll_score == 0:
+                    if current_roll > scoreboard[player]['longest_turn']:
+                        scoreboard[player]['longest_turn'] = current_roll
                     is_looser = True
                     break
                 elif remaining_dices > 0:
@@ -130,16 +141,21 @@ def game():
             else:
                 print(f"you win this turn, scoring {potential_turn_score} pts\n")
                 scoreboard[player]["score"] += potential_turn_score
+
+                if potential_turn_score > scoreboard[player]["max_score_turn"]:
+                    scoreboard[player]["max_score_turn"] = potential_turn_score
             
             print_total_score(scoreboard)
             
             if scoreboard[player]["score"] >= DEFAULT_TARGET_SCORE:
+                for player in PLAYERS:
+                    print(f"Max turn scoring : {max(scoreboard[player]['max_score_turn'] for player in PLAYERS)}")
+
                 is_finished = True
                 break
         
     print(f"Game in {current_turn} turns")
-        
-        
-            
-        
+
+
+  
 game()

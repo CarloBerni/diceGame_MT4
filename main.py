@@ -68,10 +68,16 @@ def init_scoreboard():
     return scoreboard
 
 
+def get_sorted_scoreboard(scoreboard):
+    sorted_dict_keys = sorted(scoreboard, key=lambda x: (scoreboard[x]['score']), reverse=True)
+    return {x:scoreboard[x] for x in sorted_dict_keys}
+
+
 def print_total_score(scoreboard):
+    sorted_scoreboard = get_sorted_scoreboard(scoreboard)
     total_score = "Total score: "
-    for player in scoreboard:
-        current_player_score = scoreboard[player]['score']
+    for player in sorted_scoreboard:
+        current_player_score = sorted_scoreboard[player]['score']
         total_score += f"{player}--> {current_player_score}, "
     print(total_score + "\n")
 
@@ -113,6 +119,7 @@ def game():
             else:
                 print(f"you win this turn, scoring {potential_turn_score} pts\n")
                 scoreboard[player]["score"] += potential_turn_score
+            
             print_total_score(scoreboard)
             
             if scoreboard[player]["score"] >= DEFAULT_TARGET_SCORE:

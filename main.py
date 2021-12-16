@@ -34,6 +34,7 @@ def analyse_dices_to_roll(nb_dices_rolled, dice_value_occurence_list):
 
 def analyse_bonus_score(dice_value_occurrence_list):
     score = 0
+    times_bonus = 0
     for side_value_index, dice_value_occurrence in enumerate(dice_value_occurrence_list):
         nb_of_bonus = dice_value_occurrence // THRESHOLD_BONUS
         if nb_of_bonus > 0:
@@ -43,8 +44,9 @@ def analyse_bonus_score(dice_value_occurrence_list):
                 bonus_multiplier = STD_BONUS_MULTIPLIER
             score += nb_of_bonus * bonus_multiplier * (side_value_index + 1)
             dice_value_occurrence_list[side_value_index] %= THRESHOLD_BONUS
+            times_bonus += 1
 
-    return score, dice_value_occurrence_list
+    return score, dice_value_occurrence_list, times_bonus
 
 
 def analyse_standard_score(dice_value_occurrence_list):
@@ -57,10 +59,10 @@ def analyse_standard_score(dice_value_occurrence_list):
 
 
 def analyse_score(dice_value_occurrence_list):
-    bonus_score, dice_value_occurrence_list = analyse_bonus_score(dice_value_occurrence_list)
+    bonus_score, dice_value_occurrence_list, times_bonus = analyse_bonus_score(dice_value_occurrence_list)
     standard_score, dice_value_occurrence_list = analyse_standard_score(dice_value_occurrence_list)
 
-    return bonus_score + standard_score
+    return bonus_score + standard_score, times_bonus
 
 def init_scoreboard():
     scoreboard = {}
@@ -71,8 +73,6 @@ def init_scoreboard():
             "lost_score": 0,
             "rolls": 0,
             "full_roll": 0,
-            "max_lost_score": 0,
-            "max_score_turn": 0,
             "max_potential_lost": 0,
             "longest_turn": 0,
             "rank": 0,
@@ -102,6 +102,9 @@ def game():
     scoreboard = init_scoreboard()
     while not is_finished:
         current_turn += 1
+        scored_max_turn = ['', 0]
+        max_loss_turn = ['', 0]
+        longest_turn = ['', 0]
         for player in PLAYERS:
 
             print(f"turn#{current_turn}-->{player} rank #{scoreboard[player]['rank']}, score {scoreboard[player]['score']}")
@@ -113,44 +116,58 @@ def game():
             remaining_dices = DEFAULT_DICES_NB
 
             while remaining_dices > 0 and reroll == "y":
+
+                if potential_turn_score > scoreboard[player]['max_potential_lost']:
+                    scoreboard[player]['max_potential_lost'] = potential_turn_score
+
+                print(scoreboard[player]['max_potential_lost'])
                 current_roll += 1
                 dices_occurences = roll_dice_set(remaining_dices)
+                print(dices_occurences)
                 previous_remaining_dices = remaining_dices
-                potential_roll_score = analyse_score(dices_occurences)
+                potential_roll_score, times_bonus = analyse_score(dices_occurences)
                 remaining_dices = analyse_dices_to_roll(remaining_dices, dices_occurences)
                 potential_turn_score += potential_roll_score
                 
                 print(f"roll #{current_roll} : {previous_remaining_dices - remaining_dices} scoring dices scoring {potential_roll_score}, potential total turn score {potential_turn_score}, remaining dice to roll : {remaining_dices}")
-                
+                                
+
+                # Stats
                 if remaining_dices == 0 and potential_roll_score > 0:
                     scoreboard[player]['full_roll'] += 1
                     remaining_dices = DEFAULT_DICES_NB
-                
+
+                if current_roll > longest_turn[1]:
+                    longest_turn[0] = player
+                    longest_turn[1] = current_roll
+
+                scoreboard[player]['bonus'] += times_bonus
+
                 if potential_roll_score == 0:
-                    if current_roll > scoreboard[player]['longest_turn']:
-                        scoreboard[player]['longest_turn'] = current_roll
                     is_looser = True
                     break
                 elif remaining_dices > 0:
                     reroll = input(f"Do you want to reroll {remaining_dices} dices ? [y/n]")
-            
-            
+
+
             if is_looser:
                 print(f"you lose this turn and a potential to score {potential_turn_score} pts\n")
                 scoreboard[player]["lost_score"] += potential_turn_score
+
+                if potential_turn_score > max_loss_turn[1]:
+                    max_loss_turn[0] = player
+                    max_loss_turn[1] = potential_turn_score
+
             else:
                 print(f"you win this turn, scoring {potential_turn_score} pts\n")
                 scoreboard[player]["score"] += potential_turn_score
 
-                if potential_turn_score > scoreboard[player]["max_score_turn"]:
-                    scoreboard[player]["max_score_turn"] = potential_turn_score
-            
-            print_total_score(scoreboard)
-            
-            if scoreboard[player]["score"] >= DEFAULT_TARGET_SCORE:
-                for player in PLAYERS:
-                    print(f"Max turn scoring : {max(scoreboard[player]['max_score_turn'] for player in PLAYERS)}")
+                if potential_turn_score > scored_max_turn[1]:
+                    scored_max_turn[0] = player
+                    scored_max_turn[1] = potential_turn_score
 
+            if scoreboard[player]["score"] >= DEFAULT_TARGET_SCORE:
+                print(scored_max_turn)
                 is_finished = True
                 break
         

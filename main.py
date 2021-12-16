@@ -12,11 +12,6 @@ STD_BONUS_MULTIPLIER = 100  # Standard multiplier for bonus
 ACE_BONUS_MULTIPLIER = 1000  # Special multiplier for aces bonus
 PLAYERS = ["Stéphane", "François", "Romain", "Laurent", "Christophe", "Isabelle", "Sylvie"] # List of players
 
-# Stats
-MEAN_SCORING_TURN = 0
-MEAN_NON_SCORING_TURN = 0
-
-
 
 # return a list of dices value occurrence for a roll of nb_dice_to_roll dices
 def roll_dice_set(nb_dice_to_roll):
@@ -74,7 +69,6 @@ def init_scoreboard():
             "rolls": 0,
             "full_roll": 0,
             "max_potential_lost": 0,
-            "longest_turn": 0,
             "rank": 0,
         }
     return scoreboard
@@ -100,12 +94,16 @@ def game():
     is_finished = False
     current_turn = 0
     scoreboard = init_scoreboard()
+    scored_max_turn = ['', 0]
+    max_loss_turn = ['', 0]
+    longest_turn = ['', 0]
+    scoring_turn = [0, 0]
+    non_scoring_turn = [0, 0]
     while not is_finished:
         current_turn += 1
-        scored_max_turn = ['', 0]
-        max_loss_turn = ['', 0]
-        longest_turn = ['', 0]
         for player in PLAYERS:
+
+            print_total_score(scoreboard)
 
             print(f"turn#{current_turn}-->{player} rank #{scoreboard[player]['rank']}, score {scoreboard[player]['score']}")
             
@@ -120,17 +118,16 @@ def game():
                 if potential_turn_score > scoreboard[player]['max_potential_lost']:
                     scoreboard[player]['max_potential_lost'] = potential_turn_score
 
-                print(scoreboard[player]['max_potential_lost'])
                 current_roll += 1
+                scoreboard[player]['rolls'] += 1
                 dices_occurences = roll_dice_set(remaining_dices)
-                print(dices_occurences)
                 previous_remaining_dices = remaining_dices
                 potential_roll_score, times_bonus = analyse_score(dices_occurences)
                 remaining_dices = analyse_dices_to_roll(remaining_dices, dices_occurences)
                 potential_turn_score += potential_roll_score
                 
                 print(f"roll #{current_roll} : {previous_remaining_dices - remaining_dices} scoring dices scoring {potential_roll_score}, potential total turn score {potential_turn_score}, remaining dice to roll : {remaining_dices}")
-                                
+                
 
                 # Stats
                 if remaining_dices == 0 and potential_roll_score > 0:
@@ -153,6 +150,8 @@ def game():
             if is_looser:
                 print(f"you lose this turn and a potential to score {potential_turn_score} pts\n")
                 scoreboard[player]["lost_score"] += potential_turn_score
+                non_scoring_turn[0] += 1
+                non_scoring_turn[1] += potential_turn_score
 
                 if potential_turn_score > max_loss_turn[1]:
                     max_loss_turn[0] = player
@@ -161,17 +160,37 @@ def game():
             else:
                 print(f"you win this turn, scoring {potential_turn_score} pts\n")
                 scoreboard[player]["score"] += potential_turn_score
+                scoring_turn[0] += 1
+                scoring_turn[1] += potential_turn_score
 
                 if potential_turn_score > scored_max_turn[1]:
                     scored_max_turn[0] = player
                     scored_max_turn[1] = potential_turn_score
 
+            
+            #ENDGAME
             if scoreboard[player]["score"] >= DEFAULT_TARGET_SCORE:
-                print(scored_max_turn)
+                print(f"Game in {current_turn} turns")
+                sorted_scoreboard = get_sorted_scoreboard(scoreboard)
+                for player in sorted_scoreboard:
+                    if sorted_scoreboard[player]['score'] >= DEFAULT_TARGET_SCORE:
+                        print(f"{player} wins ! scoring {sorted_scoreboard[player]['score']} in {sorted_scoreboard[player]['rolls']} rolls with {sorted_scoreboard[player]['full_roll']} full roll, {sorted_scoreboard[player]['bonus']} bonus and {sorted_scoreboard[player]['max_potential_lost']} potential points lost")
+                    
+                    else:
+                        print(f"{player} lose ! scoring {sorted_scoreboard[player]['score']} in {sorted_scoreboard[player]['rolls']} rolls with {sorted_scoreboard[player]['full_roll']} full roll, {sorted_scoreboard[player]['bonus']} bonus and {sorted_scoreboard[player]['max_potential_lost']} potential points lost")
+                    
+                    
+                print("\n")
+                print(f"Max turn scoring : {scored_max_turn[0]} with {scored_max_turn[1]}")
+                print(f"Longest turn : {longest_turn[0]} with {longest_turn[1]}")
+                print(f"Max turn loss : {max_loss_turn[0]} with {max_loss_turn[1]}")
+
+                print("\n")
+                print(f"Mean scoring turn : {round(scoring_turn[1] / scoring_turn[0]} ({scoring_turn[0]} turns)")
+                print(f"Mean non scoring turn : {round(non_scoring_turn[1] / non_scoring_turn[0]} ({non_scoring_turn[0]} turns)")
                 is_finished = True
                 break
         
-    print(f"Game in {current_turn} turns")
 
 
   

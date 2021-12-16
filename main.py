@@ -186,8 +186,8 @@ def game():
                 print(f"Max turn loss : {max_loss_turn[0]} with {max_loss_turn[1]}")
 
                 print("\n")
-                print(f"Mean scoring turn : {round(scoring_turn[1] / scoring_turn[0]} ({scoring_turn[0]} turns)")
-                print(f"Mean non scoring turn : {round(non_scoring_turn[1] / non_scoring_turn[0]} ({non_scoring_turn[0]} turns)")
+                print(f"Mean scoring turn : {round(scoring_turn[1] / scoring_turn[0])} ({scoring_turn[0]} turns)")
+                print(f"Mean non scoring turn : {round(non_scoring_turn[1] / non_scoring_turn[0])} ({non_scoring_turn[0]} turns)")
                 is_finished = True
                 break
         

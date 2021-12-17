@@ -213,7 +213,6 @@ def game():
                 print_endgame_stats(stats)
                 is_finished = True
                 break
-        
 
   
 game()
